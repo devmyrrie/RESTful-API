@@ -1,0 +1,15 @@
+RewriteEngine on
+
+#Redirige lugares/ hacia RestController.php con argumentos  view=allPlaces
+RewriteRule ^lugares/?$   RestController.php?view=allPlaces [nc,qsa]
+
+#Redirige lugares/numero hacia RestController.php con argumentos view=singlePlace   y id=lugar
+RewriteRule ^lugares/([A-Za-z0-9-]+)/?$   RestController.php?view=singlePlace&id=$1 [nc,qsa]
+
+#Redirige lugares/provincia hacia Restcontroller.php con argumento view=allInRegion and id=provincia
+RewriteRule ^lugares/(([A-Za-z0-9-])+\*)/?$   RestController.php?view=allInRegion&id=$1  [nc,qsa]
+
+#Redirige lugares/provincia/numero hacia RestController.php con argumentos view=singleInRegion y argumentos id1=provincia y id2=nombre
+RewriteRule ^lugares/([A-Za-z0-9-]+\*)/([A-Za-z0-9-]+)/?$   RestController.php?view=singleInRegion&id1=$1&id2=$2 [nc,qsa]
+
+
