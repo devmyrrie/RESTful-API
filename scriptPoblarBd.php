@@ -4,6 +4,8 @@
 // Script para cargar a la base de datos desde  archivo
 // ----------****--------------------****----------
 
+//ERROR LINEA 58 y 82
+
 require_once ('DbConnection.php');
 
 class scriptPoblarBd
