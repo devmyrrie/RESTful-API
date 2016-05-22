@@ -32,9 +32,8 @@ function isJson($array) {
 
 
 function validFormat($array){
-	
-	
-	
+
+//validate JSON format	
 }
 
 		/** El formato JSON para  POST es el siguiente:
