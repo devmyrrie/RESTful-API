@@ -72,10 +72,11 @@ class scriptPoblarBd
                 $primerInsert = false;
                 echo $e->getMessage();
             }
+			echo "Script fue ejecutado correctamente";
+
         }
     }
 }
-echo "HOLA";
 $script = new scriptPoblarBd();
 $script->correr();
 ?>
