@@ -9,7 +9,7 @@ class DbConnection
     private $dbname;
     private $db;
     public function __construct()
-    {
+    { 
         $this->config   = parse_ini_file('config.ini', true);
         $this->hostname = $this->config['database']['host'];
         $this->username = $this->config['database']['user'];
