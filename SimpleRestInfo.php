@@ -2,6 +2,7 @@
 <?php
 class SimpleRestInfo
 {
+	
     private $httpVersion = "HTTP/1.1";
     public function setClientHttpHeaders($contentType, $statusCode)
     {

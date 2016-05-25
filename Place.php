@@ -4,6 +4,7 @@ A domain Class to  RESTful web services
 esSugerencia, si es 0 NO ES SUGERENCIA, si es 1 ES SUGERENCIA
 */
 require_once('DbConnection.php');
+
 Class Place
 {
     private $dbConnection;

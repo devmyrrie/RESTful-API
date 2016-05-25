@@ -11,6 +11,7 @@ class scriptPoblarBd
     private $provinciasArray;
     public function __construct()
     {
+		
         $this->dbConnection = new DbConnection();
         $this->db           = $this->dbConnection->connect();
     }

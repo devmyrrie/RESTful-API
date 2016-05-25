@@ -1,5 +1,6 @@
 <?php
 require_once("PlaceRestHandler.php");
+
 $view   = ""; //variable passed from .htaccess (view)
 $isPost = false;
 $isGet  = false;

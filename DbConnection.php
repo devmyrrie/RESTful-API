@@ -1,6 +1,7 @@
 <?php
 class DbConnection
 {
+	
     private $config;
     private $hostname;
     private $username;
