@@ -27,6 +27,7 @@ class DbConnection
             //charset utf8 es importante para guardar tildes y asi, en la bd    
             $this->db = new PDO("mysql:host=$this->hostname;dbname=$this->dbname;charset=utf8", $this->username, $this->password);
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
         }
         catch (PDOException $e)
         {

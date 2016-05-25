@@ -15,10 +15,12 @@ Class Place
         $this->db              = $this->dbConnection->connect();
         $this->provinciasArray = array(
             "San José" => 1,
+            "San Jose" => 1,
             "Alajuela" => 2,
             "Cartago" => 3,
             "Heredia" => 4,
             "Limón" => 5,
+            "Limon" => 5,
             "Guanacaste" => 6,
             "Puntarenas" => 7
         );
@@ -34,7 +36,8 @@ Class Place
     }
     /** El formato JSON para  POST es el siguiente:
     {
-    "Lugares": [
+    "Lugares":
+    [
     {
     "nombreLugar": "La Canela",
     "descripcionLugar": "Lugar de reposterÃ­a",
@@ -63,23 +66,9 @@ Class Place
             $lastID           = null;
             if ($nombreLugar != "" && $descripcionLugar != "" && $nombreProvincia != "" && $idProvincia != -1 && $ubicacionLugar != "" && $telefonoLugar != "")
             {
-                if ($nombreProvincia == "San José")
-                {
-                    $place = "http://192.168.0.104/PHP/lugares/San-Jose*";
-                }
-                else
-                {
-                    if ($nombreProvincia == "Limón")
-                    {
-                        $place = "http://192.168.0.104/PHP/lugares/Limon*";
-                    }
-                    else
-                    {
-                        $place = "http://192.168.0.104/PHP/lugares/" . $nombreProvincia;
-                    }
-                }
                 if ($this->db != null)
                 {
+                    $place = "http://192.168.0.104/ProhDis/lugares/";
                     try
                     {
                         $this->db->beginTransaction();
@@ -89,14 +78,16 @@ Class Place
                         $stm->bindValue(':telefonoLugar', $telefonoLugar);
                         $stm->execute();
                         //Antes de llamar a commit debemos llamar a lastindex sino es un bug.            
-                        $lastID = $this->db->lastInsertId();
-                        $stm    = $this->db->prepare("INSERT INTO selocaliza(idLugar,idProvincia,link,ubicacionLugar,esSugerencia) VALUES (:idLugar,:idProvincia,:link,:ubicacionLugar,:esSugerencia)");
-                        $stm->bindValue(":idLugar", $lastID);
+                        $lastIDInLugarTable = $this->db->lastInsertId();
+                        $stm                = $this->db->prepare("INSERT INTO selocaliza(idLugar,idProvincia,link,ubicacionLugar,esSugerencia) VALUES (:idLugar,:idProvincia,:link,:ubicacionLugar,:esSugerencia)");
+                        $stm->bindValue(":idLugar", $lastIDInLugarTable);
                         $stm->bindValue(":idProvincia", $idProvincia);
                         $stm->bindValue(":link", $link);
                         $stm->bindValue(":ubicacionLugar", $ubicacionLugar);
                         $stm->bindValue(":esSugerencia", 1);
                         $stm->execute();
+                        $lastIDinGeneral = $this->db->lastInsertId(); //Last auto increment unique id inserted in the  seLocaliza table, that ID tells us  where the recently inserted place is.
+                        $place           = $place . $lastIDinGeneral;
                         $this->db->commit();
                     }
                     catch (PDOException $e)
@@ -115,16 +106,33 @@ Class Place
         }
         return $place;
     }
+    /** GET response format :
+    {
+    "Lugares":
+    [
+    {
+    "nombreLugar": "La Canela",
+    "descripcionLugar": "Lugar de reposteria",
+    "nombreProvincia": "San_Jose",
+    "ubicacionLugar": "Al frende de RadioU en la UCR",
+    "link": "http://2.bp.blogspot.com/",
+    "telefonoLugar": null,
+    "id" : num
+    
+    }
+    ]
+    }
+    */
     public function getAllPlaces()
     {
         $resultArray = array();
         if ($this->db != null)
         {
-            $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar
-                from provincia pro,    lugar lg, selocaliza sl
-                WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar";
             try
             {
+                $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar, sl.id
+                 from provincia pro,    lugar lg, selocaliza sl
+                 WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar";
                 foreach ($this->db->query($sql) as $row)
                 {
                     $resultArray["Lugares"][] = $row;
@@ -133,82 +141,90 @@ Class Place
             catch (PDOException $e)
             {
                 throw $e;
+                $error = array(
+                    'error' => 'No place  found!'
+                );
+                echo $error;
             }
-        }
-        else
-        {
-            $error = array(
-                'error' => 'No place  found!'
-            );
-            echo $error;
         }
         return $resultArray;
     }
-    public function getSinglePlace($nombreLugar) //Esta funcion me devuelve  el lugar determinado por el id ( todos los lugares es una lista, devuelve el de la posicion id) con respecto tabla LUGAREs
+    public function getSinglePlace($idLugar) //Esta funcion me devuelve  el lugar determinado por el id ( todos los lugares es una lista, devuelve el de la posicion id) con respecto tabla LUGAREs
     {
         $resultArray = array();
         if ($this->db != null)
         {
-            $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar 
-             from provincia pro, lugar lg, selocaliza sl
-             WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar  and  lg.nombreLugar = " . "'" . $nombreLugar . "'";
-            foreach ($this->db->query($sql) as $row)
+            try
             {
-                $resultArray["Lugares"][] = $row;
+                $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar,sl.id
+                from provincia pro, lugar lg, selocaliza sl
+                WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar  and  sl.idLugar = " . $idLugar;
+                foreach ($this->db->query($sql) as $row)
+                {
+                    $resultArray["Lugares"][] = $row;
+                }
             }
-        }
-        else
-        {
-            $error = array(
-                'error' => 'No place  found!'
-            );
-            echo $error;
+            catch (PDOException $e)
+            {
+                throw $e;
+                $error = array(
+                    'error' => 'No place  found!'
+                );
+                echo $error;
+            }
         }
         return $resultArray;
     }
     public function getAllPlacesInRegion($nombreProvincia)
     {
         $resultArray = array();
-        if ($this->db != null)
+        if ($this->db != null && isset($this->provinciasArray[$nombreProvincia]))
         {
-            $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar 
-             from provincia pro, lugar lg, selocaliza sl
-             WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar and sl.idProvincia = 
-             (SELECT idProvincia from provincia WHERE nombreProvincia= " . "'" . $nombreProvincia . "' )";
-            foreach ($this->db->query($sql) as $row)
+            try
             {
-                $resultArray["Lugares"][] = $row;
+                $idProvincia = $this->provinciasArray[$nombreProvincia];
+                $sql         = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar,sl.id 
+             from provincia pro, lugar lg, selocaliza sl
+             WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar and sl.idProvincia = " . $idProvincia;
+                foreach ($this->db->query($sql) as $row)
+                {
+                    $resultArray["Lugares"][] = $row;
+                }
             }
-        }
-        else
-        {
-            $error = array(
-                'error' => 'No place  found!'
-            );
-            echo $error;
+            catch (PDOException $e)
+            {
+                throw $e;
+                $error = array(
+                    'error' => 'No place  found!'
+                );
+				echo $error;
+            }
         }
         return $resultArray;
     }
-    public function getSinglePlaceInRegion($nombreProvincia, $nombreLugar)
+    public function getSinglePlaceInRegion($nombreProvincia, $idLugarLoc)
     {
         $resultArray = array();
-        if ($this->db != null)
+        if ($this->db != null && isset($this->provinciasArray[$nombreProvincia]))
         {
-            $sql = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar
-                       from provincia pro, lugar lg, selocaliza sl 
-                       WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar and sl.idProvincia = 
-                       (SELECT idProvincia from provincia WHERE nombreProvincia=" . "'" . $nombreProvincia . "'" . ") and lg.nombreLugar=" . "'" . $nombreLugar . "'";
-            foreach ($this->db->query($sql) as $row)
+            try
             {
-                $resultArray["Lugares"][] = $row;
+                $idProvincia = $this->provinciasArray[$nombreProvincia];
+                $sql         = "SELECT lg.nombreLugar,lg.descripcionLugar, pro.nombreProvincia,sl.ubicacionLugar,sl.link,lg.telefonoLugar,sl.id
+                       from provincia pro, lugar lg, selocaliza sl
+                       WHERE pro.idProvincia=sl.idProvincia and lg.idlugar = sl.idlugar and sl.idProvincia =" . $idProvincia . " and sl.id=" . $idLugarLoc;
+                foreach ($this->db->query($sql) as $row)
+                {
+                    $resultArray["Lugares"][] = $row;
+                }
             }
-        }
-        else
-        {
-            $error = array(
-                'error' => 'No place  found!'
-            );
-            echo $error;
+            catch (PDOException $e)
+            {
+                throw $e;
+                $error = array(
+                    'error' => 'No place  found!'
+                );
+            }
         }
         return $resultArray;
     }
