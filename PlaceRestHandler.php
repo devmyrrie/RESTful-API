@@ -3,7 +3,7 @@ require_once("SimpleRestInfo.php");
 require_once("Place.php");
 
 class PlaceRestHandler extends SimpleRestInfo
-{
+{ 
     function getAllPlaces()
     {
 		$response="";

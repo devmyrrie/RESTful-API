@@ -53,6 +53,7 @@ switch ($view)
             $province         = filter_var(standarize($province), FILTER_SANITIZE_STRING);
             $response         = $placeRestHandler->getSinglePlaceInRegion($province, $idLugar);
             echo $response;
+			
         }
         break;
     case "singlePlace":
@@ -92,5 +93,5 @@ function standarize($string)
     }
     $returnedString = str_replace("-", " ", $returnedString); // Replaces - for  space.
     return $returnedString;
-}
+}  
 ?> 
